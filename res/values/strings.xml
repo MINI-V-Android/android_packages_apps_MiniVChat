@@ -1,4 +1,9 @@
 xml<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">MINI-V Chat</string>
+    <string name="hint_input">Enter prompt</string>
+    <string name="btn_send">Send</string>
+    <string name="btn_cancel">Cancel</string>
+    <string name="error_service_not_found">AI Service not found.</string>
+    <string name="error_service_not_ready">AI Service is not ready. Try again later.</string>
 </resources>
