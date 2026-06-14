@@ -6,11 +6,6 @@
     android:orientation="vertical"
     android:padding="16dp">
 
-    <!-- AppBar Padding -->
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="?android:attr/actionBarSize" />
-
     <!-- LLM result output text area -->
     <ScrollView
         android:id="@+id/scrollView"
