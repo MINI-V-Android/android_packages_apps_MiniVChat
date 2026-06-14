@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.os.ServiceManager
 import android.util.Log
 import android.view.View
+import android.view.WindowInsets
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ScrollView
@@ -42,6 +43,9 @@ class MainActivity : Activity() {
 
     /** Setup view instances */
     private fun setupUI() {
+        // Setup window insets
+        setupInsets()
+
         // Initialize instances
         btnSend = findViewById(R.id.btnSend)
         etInput = findViewById(R.id.etInput)
@@ -50,6 +54,21 @@ class MainActivity : Activity() {
 
         // Set event listener
         btnSend.setOnClickListener { onBtnSend() }
+    }
+
+    /** Setup window insets */
+    private fun setupInsets() {
+        val root = findViewById<View>(R.id.rootLayout)
+        val basePad = (16 * resources.displayMetrics.density).toInt()
+
+        root.setOnApplyWindowInsetsListener { v, insets ->
+            val bars = insets.getInsets(WindowInsets.Type.systemBars())
+            v.setPadding(basePad + bars.left,
+                        basePad + bars.top,
+                        basePad + bars.right,
+                        basePad + bars.bottom)
+            insets
+        }
     }
 
     /** Set inference state as ongoing */
