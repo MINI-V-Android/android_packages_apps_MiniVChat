@@ -64,7 +64,7 @@ class MainActivity : Activity() {
         btnSend.text = getString(R.string.btn_cancel)
 
         // Clear input edittext
-        etInput.clear()
+        etInput.setText("")
         etInput.isEnabled = false
 
         // Clear output textview
