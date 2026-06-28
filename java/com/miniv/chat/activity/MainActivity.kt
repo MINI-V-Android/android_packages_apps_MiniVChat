@@ -8,11 +8,14 @@ import android.view.View
 import android.view.WindowInsets
 import android.widget.Button
 import android.widget.EditText
-import android.widget.ScrollView
-import android.widget.TextView
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.miniv.ai.IMINIVAIService
 import com.miniv.chat.R
+import com.miniv.chat.adapter.ChatAdapter
+import com.miniv.chat.chat_data.ChatData
 import com.miniv.chat.llm_engine.LLMStreamCallback
+import java.util.UUID
 
 /**
  *  Main Activity
@@ -27,8 +30,10 @@ class MainActivity : Activity() {
     // View Instances
     private lateinit var btnSend: Button
     private lateinit var etInput: EditText
-    private lateinit var scrollView: ScrollView
-    private lateinit var tvOutput: TextView
+    private lateinit var rvChat: RecyclerView
+
+    // Chat adapter
+    private val chatAdapter = ChatAdapter(mutableListOf())
 
     // Service Instance
     private var service: IMINIVAIService? = null
@@ -55,8 +60,15 @@ class MainActivity : Activity() {
         // Initialize instances
         btnSend = findViewById(R.id.btnSend)
         etInput = findViewById(R.id.etInput)
-        scrollView = findViewById(R.id.scrollView)
-        tvOutput = findViewById(R.id.tvOutput)
+        rvChat = findViewById(R.id.rvChat)
+
+        // Setup recycler view
+        rvChat.adapter = chatAdapter
+        rvChat.layoutManager = LinearLayoutManager(this).apply {
+            // Chatting must be reversed.
+            // - Newer is at bottom
+            stackFromEnd = true
+        }
 
         // Set event listener
         btnSend.setOnClickListener { onBtnSend() }
@@ -97,9 +109,6 @@ class MainActivity : Activity() {
         // Clear input edittext
         etInput.setText("")
         etInput.isEnabled = false
-
-        // Clear output textview
-        tvOutput.text = ""
     }
 
     /**
@@ -203,6 +212,10 @@ class MainActivity : Activity() {
             return
         }
 
+        // Add chat message
+        addUserMessage(prompt)
+        addEmptyLLMMessage()
+
         // Generate callback instance for inference
         val inferCallback = getStreamCallback()
 
@@ -242,8 +255,8 @@ class MainActivity : Activity() {
                     override fun onToken(token: String) {
                         // Show generated token to output
                         runOnUiThread {
-                            tvOutput.append(token)
-                            scrollView.post { scrollView.fullScroll(View.FOCUS_DOWN) }
+                            chatAdapter.appendTokenToLast(token)
+                            scrollToBottom()
                         }
                     }
 
@@ -264,4 +277,41 @@ class MainActivity : Activity() {
 
         return LLMStreamCallback(listener)
     }
+
+    // region - chat message management
+    /**
+     * Add a user message to the chat list
+     */
+    private fun addUserMessage(text: String) {
+        chatAdapter.addMessage(
+            ChatData.UserChatData(
+                id = UUID.randomUUID(),
+                message = text,
+                timestamp = System.currentTimeMillis(),
+            )
+        )
+        scrollToBottom()
+    }
+
+    /**
+     * Add an empty LLM message that tokens will be appended into
+     */
+    private fun addEmptyLLMMessage() {
+        chatAdapter.addMessage(
+            ChatData.LLMChatData(
+                id = UUID.randomUUID(),
+                message = "",
+                timestamp = System.currentTimeMillis(),
+            )
+        )
+        scrollToBottom()
+    }
+
+    /**
+     * Scroll chat list to the latest message
+     */
+    private fun scrollToBottom() {
+        rvChat.scrollToPosition(chatAdapter.itemCount - 1)
+    }
+    // endregion
 }

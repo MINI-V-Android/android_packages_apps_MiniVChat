@@ -7,24 +7,12 @@
     android:orientation="vertical"
     android:padding="16dp">
 
-    <!-- LLM result output text area -->
-    <ScrollView
-        android:id="@+id/scrollView"
+    <!-- LLM Chat list area -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvChat"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"
-        android:background="#F5F5F5"
-        android:padding="8dp">
-
-        <TextView
-            android:id="@+id/tvOutput"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textSize="16sp"
-            android:lineSpacingExtra="4dp"
-            android:textIsSelectable="true" />
-
-    </ScrollView>
+        android:layout_weight="1" />
 
     <!-- LLM prompt input area -->
     <LinearLayout
