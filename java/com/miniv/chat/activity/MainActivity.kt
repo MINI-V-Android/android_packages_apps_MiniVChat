@@ -1,4 +1,4 @@
-package com.miniv.chat
+package com.miniv.chat.activity
 
 import android.app.Activity
 import android.os.Bundle
@@ -11,8 +11,12 @@ import android.widget.EditText
 import android.widget.ScrollView
 import android.widget.TextView
 import com.miniv.ai.IMINIVAIService
+import com.miniv.chat.R
+import com.miniv.chat.llm_engine.LLMStreamCallback
 
-/** Main Activity */
+/**
+ *  Main Activity
+ */
 class MainActivity : Activity() {
     companion object {
         private const val TAG = "MiniVChat"
@@ -41,7 +45,9 @@ class MainActivity : Activity() {
         connectService()
     }
 
-    /** Setup view instances */
+    /**
+     * Setup view instances
+     */
     private fun setupUI() {
         // Setup window insets
         setupInsets()
@@ -56,7 +62,9 @@ class MainActivity : Activity() {
         btnSend.setOnClickListener { onBtnSend() }
     }
 
-    /** Setup window insets */
+    /**
+     * Setup window insets
+     */
     private fun setupInsets() {
         val root = findViewById<View>(R.id.rootLayout)
         val basePad = (16 * resources.displayMetrics.density).toInt()
@@ -71,13 +79,17 @@ class MainActivity : Activity() {
         }
     }
 
-    /** Set inference state as ongoing */
+    /**
+     * Set inference state as ongoing
+     */
     private fun setInferOngoingState(sessionId: Int) {
         currentSessionId = sessionId
         isInferOngoing = true
     }
 
-    /** Set UI as inference ongoing */
+    /**
+     *  Set UI as inference ongoing
+     */
     private fun setInferOngoingUI() {
         // Set send button as cancel
         btnSend.text = getString(R.string.btn_cancel)
@@ -90,13 +102,17 @@ class MainActivity : Activity() {
         tvOutput.text = ""
     }
 
-    /** Reset inference state */
+    /**
+     * Reset inference state
+     */
     private fun resetInferState() {
         currentSessionId = -1
         isInferOngoing = false
     }
 
-    /** Reset inference related UI */
+    /**
+     *  Reset inference related UI
+     */
     private fun resetInferUI() {
         // Set send button as send
         btnSend.text = getString(R.string.btn_send)
@@ -105,7 +121,9 @@ class MainActivity : Activity() {
         etInput.isEnabled = true
     }
 
-    /** On click [btnSend] */
+    /**
+     *  On click [btnSend]
+     */
     private fun onBtnSend() {
         if (isInferOngoing) {
             cancelInference()
@@ -114,7 +132,9 @@ class MainActivity : Activity() {
         }
     }
 
-    /** Connect to MINIVAIService via ServiceManager */
+    /**
+     * Connect to MINIVAIService via ServiceManager
+     */
     private fun connectService() {
         // Get service binder
         val binder = ServiceManager.getService(SERVICE_NAME)
@@ -130,7 +150,9 @@ class MainActivity : Activity() {
         Log.i(TAG, "Service connected")
     }
 
-    /** Cancel current ongoing inference */
+    /**
+     * Cancel current ongoing inference
+     */
     private fun cancelInference() {
         // Check if current session is ongoing
         val svc = service ?: return
@@ -148,7 +170,9 @@ class MainActivity : Activity() {
         resetInferUI()
     }
 
-    /** Start new inference */
+    /**
+     * Start new inference
+     */
     private fun startInference() {
         // Check if inference ongoing
         if (isInferOngoing) {
@@ -209,7 +233,9 @@ class MainActivity : Activity() {
         }
     }
 
-    /** Generate callback listener instance */
+    /**
+     * Generate callback listener instance
+     */
     private fun getStreamCallback(): LLMStreamCallback {
         val listener =
                 object : LLMStreamCallback.Listener {

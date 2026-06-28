@@ -1,11 +1,11 @@
-package com.miniv.chat
+package com.miniv.chat.llm_engine
 
 import android.util.Log
 import com.miniv.ai.ILLMStreamCallback
 
 /**
  * LLM Stream Callback
- * - Implementation of [ILLMStreamCallback.Stub] interface
+ * - Implementation of [Stub] interface
  */
 class LLMStreamCallback(
     private val listener: Listener,
