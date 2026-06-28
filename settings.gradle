@@ -1,0 +1,22 @@
+// settings.gradle  (repo root: packages/apps/MiniVChat/)
+//
+// 이 Gradle 프로젝트는 "실제 빌드용"이 아니라 IDE(Android Studio / VSCode + Gradle
+// language server)가 클래스패스·AIDL·res를 인식해서 lint·자동완성·레이아웃 프리뷰를
+// 제공하게 만드는 용도입니다. 실제 APK 빌드는 계속 Soong(m / mmm)이 합니다.
+
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+dependencyResolutionManagement {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+rootProject.name = "MiniVChat"

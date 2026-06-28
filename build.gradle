@@ -1,0 +1,54 @@
+plugins {
+    id 'com.android.application' version '8.7.3'
+    id 'org.jetbrains.kotlin.android' version '2.0.21'
+}
+
+def miniVAidlDir = file("$rootDir/../android_frameworks_mini-v/aidl")
+
+android {
+    namespace 'com.miniv.chat'
+    compileSdk 36
+
+    defaultConfig {
+        applicationId 'com.miniv.chat'
+        minSdk 36
+        targetSdk 36
+        versionCode 1
+        versionName '0.1'
+    }
+
+    buildFeatures {
+        aidl true
+    }
+
+    sourceSets {
+        main {
+            manifest.srcFile 'AndroidManifest.xml'
+            java.srcDirs = ['java']
+            kotlin.srcDirs = ['java']
+            res.srcDirs = ['res']
+
+            // MINI-V AI AIDL Directory
+            aidl.srcDirs       = [miniVAidlDir]
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = '17'
+        freeCompilerArgs += ['-Xjvm-default=all']
+    }
+
+    lint {
+        abortOnError false
+        checkReleaseBuilds false
+    }
+}
+
+dependencies {
+    // Local development only. System framework dependency
+    compileOnly files('stub/framework-stub.jar')
+}
