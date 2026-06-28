@@ -51,4 +51,7 @@ android {
 dependencies {
     // Local development only. System framework dependency
     compileOnly files('stub/framework-stub.jar')
+
+    // AndroidX RecyclerView
+    implementation 'androidx.recyclerview:recyclerview:1.4.0'
 }
