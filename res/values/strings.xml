@@ -6,4 +6,6 @@
     <string name="btn_cancel">Cancel</string>
     <string name="error_service_not_found">AI Service not found.</string>
     <string name="error_service_not_ready">AI Service is not ready. Try again later.</string>
+    <string name="err_session_reset">Conversation was reset (session expired). Please send again.</string>
+    <string name="err_session_unavailable">Could not start a session. Try again later.</string>
 </resources>
