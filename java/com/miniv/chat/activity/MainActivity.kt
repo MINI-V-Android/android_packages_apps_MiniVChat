@@ -8,8 +8,10 @@ import android.view.View
 import android.view.WindowInsets
 import android.widget.Button
 import android.widget.EditText
+import android.widget.Toast
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.miniv.ai.ILLMStreamCallback
 import com.miniv.ai.IMINIVAIService
 import com.miniv.chat.R
 import com.miniv.chat.adapter.ChatAdapter
@@ -39,6 +41,9 @@ class MainActivity : Activity() {
     private var service: IMINIVAIService? = null
 
     // Current AI session info
+    // - each session is created when start new chat
+    //   destroyed when app destroyed
+    //   or forgetCurrentSession() is called
     private var currentSessionId = -1
     private var isInferOngoing = false
 
@@ -48,6 +53,12 @@ class MainActivity : Activity() {
 
         setupUI()
         connectService()
+    }
+
+    override fun onDestroy() {
+        // Destroy currently enabled session
+        destroyCurrentSession()
+        super.onDestroy()
     }
 
     /**
@@ -94,8 +105,7 @@ class MainActivity : Activity() {
     /**
      * Set inference state as ongoing
      */
-    private fun setInferOngoingState(sessionId: Int) {
-        currentSessionId = sessionId
+    private fun setInferOngoingState() {
         isInferOngoing = true
     }
 
@@ -115,7 +125,6 @@ class MainActivity : Activity() {
      * Reset inference state
      */
     private fun resetInferState() {
-        currentSessionId = -1
         isInferOngoing = false
     }
 
@@ -157,6 +166,56 @@ class MainActivity : Activity() {
         // Connect to service
         service = IMINIVAIService.Stub.asInterface(binder)
         Log.i(TAG, "Service connected")
+    }
+
+    /**
+     * Ensure a session exists, creates one if needed
+     * - Returns the session id, or negative if creation failed
+     */
+    private fun ensureSession(svc: IMINIVAIService): Int {
+        if (currentSessionId >= 0) return currentSessionId
+
+        return try {
+            val newId = svc.createSession()
+            if (newId < 0) {
+                Log.e(TAG, "createSession() failed: $newId")
+                newId
+            } else {
+                Log.i(TAG, "createSession() succeeded: $newId")
+                currentSessionId = newId
+                newId
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "createSession() threw", e)
+            -1
+        }
+    }
+
+    /**
+     * Drop the locally tracked session without notifying the vendor
+     * - Used when the service already told us the session is gone
+     * (ILLMStreamCallback.ERROR_SESSION_EVICTED / IMINIVAIService.INFER_ERR_UNKNOWN_SESSION)
+     */
+    private fun forgetCurrentSession() {
+        currentSessionId = -1
+    }
+
+    /**
+     * Explicitly destroy the current session on the vendor side
+     * - Safe to call with no active session
+     */
+    private fun destroyCurrentSession() {
+        val svc = service ?: return
+        val sessionId = currentSessionId
+        if (sessionId < 0) return
+
+        try {
+            svc.destroySession(sessionId)
+            Log.i(TAG, "destroySession($sessionId) requested")
+        } catch (e: Exception) {
+            Log.e(TAG, "destroySession() failed", e)
+        }
+        currentSessionId = -1
     }
 
     /**
@@ -212,6 +271,14 @@ class MainActivity : Activity() {
             return
         }
 
+        // Make sure we have a live session to talk into
+        val sessionId = ensureSession(svc)
+        if (sessionId < 0) {
+            Log.e(TAG, "No session available, aborting send")
+            Toast.makeText(this, R.string.err_session_unavailable, Toast.LENGTH_SHORT).show()
+            return
+        }
+
         // Add chat message
         addUserMessage(prompt)
         addEmptyLLMMessage()
@@ -221,12 +288,19 @@ class MainActivity : Activity() {
 
         // Start inference
         try {
-            val sessionId = svc.inferStream(prompt, MAX_TOKENS, inferCallback)
-            Log.i(TAG, "inferStream started, sessionId=$sessionId")
+            val status = svc.inferStream(sessionId, prompt, MAX_TOKENS, inferCallback)
+            Log.i(TAG, "inferStream started, sessionId=$sessionId status=$status")
 
             // Check if created session is available
-            if (sessionId < 0) {
-                Log.e(TAG, "Failed to start inference: $sessionId")
+            if (status < 0) {
+                Log.e(TAG, "Failed to start inference: $status")
+
+                // Session died between ensureSession() and this call
+                // (e.g. evicted) — drop it so the next send re-creates
+                if (status == IMINIVAIService.INFER_ERR_UNKNOWN_SESSION) {
+                    forgetCurrentSession()
+                    Toast.makeText(this, R.string.err_session_reset, Toast.LENGTH_SHORT).show()
+                }
 
                 // Reset state / UI
                 resetInferState()
@@ -235,7 +309,7 @@ class MainActivity : Activity() {
             }
 
             // Set state / UI as inference ongoing
-            setInferOngoingState(sessionId)
+            setInferOngoingState()
             setInferOngoingUI()
         } catch (e: Exception) {
             Log.e(TAG, "inferStream() failed", e)
@@ -268,6 +342,20 @@ class MainActivity : Activity() {
 
                     override fun onError(code: Int, message: String) {
                         Log.e(TAG, "Inference error: code=$code msg=$message")
+
+                        // Vendor already discarded this session
+                        // — drop it locally so the next send starts a fresh conversation
+                        if (code == ILLMStreamCallback.ERROR_SESSION_EVICTED) {
+                            forgetCurrentSession()
+                            runOnUiThread {
+                                Toast.makeText(
+                                                this@MainActivity,
+                                                R.string.err_session_reset,
+                                                Toast.LENGTH_SHORT
+                                        )
+                                        .show()
+                            }
+                        }
 
                         // Reset state / UI
                         resetInferState()
