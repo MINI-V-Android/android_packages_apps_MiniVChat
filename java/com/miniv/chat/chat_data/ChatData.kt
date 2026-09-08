@@ -18,7 +18,7 @@ sealed interface ChatData {
     val message: String
     val timestamp: Long
 
-    data class LLMChatData(
+    open class LLMChatData(
         override val id: UUID,
         override var message: String,
         override val timestamp: Long,
@@ -43,6 +43,15 @@ sealed interface ChatData {
             return message
         }
     }
+
+    /**
+     * Chat Data representing thinking / waiting state before first token
+     */
+    class LLMThinkingData(
+        id: UUID = UUID.randomUUID(),
+        message: String = "Thinking...",
+        timestamp: Long = System.currentTimeMillis(),
+    ): LLMChatData(id, message, timestamp)
 
     data class UserChatData(
         override val id: UUID,

@@ -281,7 +281,7 @@ class MainActivity : Activity() {
 
         // Add chat message
         addUserMessage(prompt)
-        addEmptyLLMMessage()
+        addThinkingLLMMessage()
 
         // Generate callback instance for inference
         val inferCallback = getStreamCallback()
@@ -382,13 +382,13 @@ class MainActivity : Activity() {
     }
 
     /**
-     * Add an empty LLM message that tokens will be appended into
+     * Add a thinking LLM message placeholder before tokens are streamed
      */
-    private fun addEmptyLLMMessage() {
+    private fun addThinkingLLMMessage() {
         chatAdapter.addMessage(
-            ChatData.LLMChatData(
+            ChatData.LLMThinkingData(
                 id = UUID.randomUUID(),
-                message = "",
+                message = "Thinking...",
                 timestamp = System.currentTimeMillis(),
             )
         )
