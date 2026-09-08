@@ -43,15 +43,24 @@ class ChatAdapter(
     }
 
     /**
-     * Append token to last LLM chat data
+     * Append token to last LLM chat data.
+     * If the last item is LLMThinkingData, replaces it with a new LLMChatData initialized with the token.
+     * If it is already LLMChatData, appends the token to existing message.
      */
     fun appendTokenToLast(token: String) {
         val lastIdx = chatList.lastIndex
         if (lastIdx < 0) return
 
-        // Append only last is LLM chat data
         val chatData = chatList[lastIdx]
-        if (chatData is ChatData.LLMChatData) {
+        if (chatData is ChatData.LLMThinkingData) {
+            // Replace Thinking state with first token as LLMChatData
+            chatList[lastIdx] = ChatData.LLMChatData(
+                id = chatData.id,
+                message = token,
+                timestamp = chatData.timestamp
+            )
+            notifyItemChanged(lastIdx)
+        } else if (chatData is ChatData.LLMChatData) {
             chatData.appendMessage(token)
             notifyItemChanged(lastIdx)
         }
