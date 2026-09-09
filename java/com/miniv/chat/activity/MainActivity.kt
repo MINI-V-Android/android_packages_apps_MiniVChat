@@ -31,8 +31,12 @@ class MainActivity : Activity() {
 
     // View Instances
     private lateinit var btnSend: Button
+    private lateinit var btnModeToggle: TextView
     private lateinit var etInput: EditText
     private lateinit var rvChat: RecyclerView
+
+    // Decode Mode state (true: Multi "M" / false: Single "S")
+    private var isMultiMode = true
 
     // Chat adapter
     private val chatAdapter = ChatAdapter(mutableListOf())
@@ -70,6 +74,7 @@ class MainActivity : Activity() {
 
         // Initialize instances
         btnSend = findViewById(R.id.btnSend)
+        btnModeToggle = findViewById(R.id.btnModeToggle)
         etInput = findViewById(R.id.etInput)
         rvChat = findViewById(R.id.rvChat)
 
@@ -83,6 +88,33 @@ class MainActivity : Activity() {
 
         // Set event listener
         btnSend.setOnClickListener { onBtnSend() }
+        btnModeToggle.setOnClickListener { toggleDecodeMode() }
+
+        // Initialize mode toggle UI
+        updateModeToggleUI()
+    }
+
+    /**
+     * Toggle decode mode between Multi (M) and Single (S)
+     */
+    private fun toggleDecodeMode() {
+        isMultiMode = !isMultiMode
+        updateModeToggleUI()
+        val modeName = if (isMultiMode) "Multi-Decode Mode (N=2 Best-of-N)" else "Single-Decode Mode (N=1 Real-time)"
+        Toast.makeText(this, modeName, Toast.LENGTH_SHORT).show()
+    }
+
+    /**
+     * Update UI for mode toggle button
+     */
+    private fun updateModeToggleUI() {
+        if (isMultiMode) {
+            btnModeToggle.text = "M"
+            btnModeToggle.setBackgroundResource(R.drawable.bg_mode_toggle_multi)
+        } else {
+            btnModeToggle.text = "S"
+            btnModeToggle.setBackgroundResource(R.drawable.bg_mode_toggle_single)
+        }
     }
 
     /**
@@ -288,8 +320,12 @@ class MainActivity : Activity() {
 
         // Start inference
         try {
-            val status = svc.inferStream(sessionId, prompt, MAX_TOKENS, inferCallback)
-            Log.i(TAG, "inferStream started, sessionId=$sessionId status=$status")
+            val status = if (isMultiMode) {
+                svc.inferStreamMulti(sessionId, prompt, MAX_TOKENS, inferCallback)
+            } else {
+                svc.inferStreamSingle(sessionId, prompt, MAX_TOKENS, inferCallback)
+            }
+            Log.i(TAG, "inferStream started (isMultiMode=$isMultiMode), sessionId=$sessionId status=$status")
 
             // Check if created session is available
             if (status < 0) {
